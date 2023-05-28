@@ -4,13 +4,14 @@ plugins {
     `kotlin-dsl`
 }
 
+version = "0.0.2"
+group = "com.storyteller_f.sml"
+
 gradlePlugin {
     plugins {
         register("sml") {
-            version = "0.0.2"
             // 插件ID
             id = "com.storyteller_f.sml"
-            group = "com.storyteller_f.sml"
             // 插件的实现类
             implementationClass = "com.storyteller_f.sml.Sml"
         }
