@@ -1,8 +1,7 @@
-@file:Suppress("unused")
+@file:Suppress("unused", "UnstableApiUsage")
 
 package com.storyteller_f.sml
 
-import com.android.build.api.variant.ApplicationVariant
 import com.storyteller_f.sml.tasks.ColorTask
 import com.storyteller_f.sml.tasks.DimensionTask
 import com.storyteller_f.sml.tasks.DrawableDomain
@@ -24,46 +23,71 @@ class Sml : Plugin<Project> {
     override fun apply(project: Project) {
         val extension = project.extensions.create("sml", SmlExtension::class.java)
         val rootPath = "${project.buildDir}/generated"
-        project.androidComponents {
-            onVariants { variant ->
-                setup(variant, project, rootPath, extension)
+        setup(project, rootPath, extension, "main", "main")
+        project.afterEvaluate {
+            listOf("mapDebugSourceSetPaths", "generateDebugResources").forEach { name ->
+                listOf("colors", "dimens", "shapes").forEach {
+                    val t = tasks.getByName(
+                        "generate${
+                            it.replaceFirstChar { firstChar ->
+                                if (firstChar.isLowerCase()) firstChar.titlecase(
+                                    Locale.getDefault()
+                                ) else firstChar.toString()
+                            }
+                        }Main"
+                    )
+                    tasks.getByName(name).dependsOn(t)
+                }
+            }
+        }
+        project.android {
+            val smlTargetPath = listOf("sml_res_colors", "sml_res_dimens", "sml_res_drawables")
+            val debugPath = smlTargetPath.map {
+                "build/generated/$it/"
+            }
+            val type = listOf("main")
+            sourceSets {
+                type.forEach {
+                    getByName(it) {
+                        res.srcDirs(debugPath.map { p ->
+                            "$p$it"
+                        }.toTypedArray())
+                    }
+                }
             }
         }
     }
 
+    @Suppress("SameParameterValue")
     private fun setup(
-        variant: ApplicationVariant,
         project: Project,
         rootPath: String,
-        extension: SmlExtension
+        extension: SmlExtension,
+        subPath: String,
+        variantName: String
     ) {
-        val subPath = variant.name
-        val variantName = variant.name
-        val buildType = variant.name
         project.tasks.register(taskName("Colors", variantName), ColorTask::class.java) {
             val colorsOutputDirectory =
                 File(File(rootPath, "sml_res_colors"), subPath).apply { mkdirs() }
-            config(colorsOutputDirectory, extension, project, buildType)
+            config(colorsOutputDirectory, extension)
         }
 
         project.tasks.register(taskName("Dimens", variantName), DimensionTask::class.java) {
             val dimensOutputDirectory =
                 File(File(rootPath, "sml_res_dimens"), subPath).apply { mkdirs() }
-            config(dimensOutputDirectory, extension, project, buildType)
+            config(dimensOutputDirectory, extension)
         }
 
         project.tasks.register(taskName("Shapes", variantName), ShapeTask::class.java) {
             val drawablesOutputDirectory =
                 File(File(rootPath, "sml_res_drawables"), subPath).apply { mkdirs() }
-            config(drawablesOutputDirectory, extension, project, buildType)
+            config(drawablesOutputDirectory, extension)
         }
     }
 
     private fun ShapeTask.config(
         drawablesOutputDirectory: File,
-        extension: SmlExtension,
-        project: Project,
-        buildType: String
+        extension: SmlExtension
     ) {
         group = "sml"
         val path = File(drawablesOutputDirectory, "drawable")
@@ -72,42 +96,24 @@ class Sml : Plugin<Project> {
             File(path, "${shapeDomain.name}.xml")
         }.toTypedArray()
         drawableDomains = extension.drawables.toTypedArray()
-        bindOutputPath(project, drawablesOutputDirectory, buildType)
     }
 
     private fun DimensionTask.config(
         dimensOutputDirectory: File,
-        extension: SmlExtension,
-        project: Project,
-        buildType: String
+        extension: SmlExtension
     ) {
         group = "sml"
         outputFile = File(dimensOutputDirectory, "values/generated_dimens.xml")
         dimensMap = extension.dimen.get()
-        bindOutputPath(project, dimensOutputDirectory, buildType)
     }
 
     private fun ColorTask.config(
         colorsOutputDirectory: File,
-        extension: SmlExtension,
-        project: Project,
-        buildType: String
+        extension: SmlExtension
     ) {
         group = "sml"
         outputFile = File(colorsOutputDirectory, "values/generated_colors.xml")
         colorsMap = extension.color.get()
-        bindOutputPath(project, colorsOutputDirectory, buildType)
-    }
-
-    @Suppress("UNUSED_PARAMETER")
-    private fun bindOutputPath(project: Project, outputDirectory: File, buildType: String) {
-//        val substring = outputDirectory.absolutePath.substring(project.projectDir.absolutePath.length + 1)
-//        project.kotlin {
-//            it.sourceSets.getByName(buildType) { sourceSet ->
-//                sourceSet.kotlin.srcDirs(substring)
-//            }
-//        }
-
     }
 
     private fun taskName(type: String, variantName: String): String {

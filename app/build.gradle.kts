@@ -1,4 +1,10 @@
-import com.storyteller_f.sml.config.*
+import com.storyteller_f.sml.config.Dimension
+import com.storyteller_f.sml.config.Dp
+import com.storyteller_f.sml.config.Line
+import com.storyteller_f.sml.config.Oval
+import com.storyteller_f.sml.config.Rectangle
+import com.storyteller_f.sml.config.RgbColor
+import com.storyteller_f.sml.config.Ring
 import com.storyteller_f.sml.dimens
 import com.storyteller_f.sml.reference
 
@@ -10,11 +16,11 @@ plugins {
 
 android {
     namespace = "com.storyteller_f.sml"
-    compileSdk = 33
+    compileSdk = 34
     defaultConfig {
         applicationId = "com.storyteller_f.sml"
         minSdk = 21
-        targetSdk = 33
+        targetSdk = 34
         versionCode = 1
         versionName = "1.0"
 
@@ -24,7 +30,10 @@ android {
     buildTypes {
         release {
             isMinifyEnabled = false
-            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
         }
     }
     val javaVersion = JavaVersion.VERSION_17
@@ -42,20 +51,19 @@ android {
 
 dependencies {
 
-    implementation("androidx.core:core-ktx:1.10.1")
+    implementation("androidx.core:core-ktx:1.12.0")
     implementation("androidx.appcompat:appcompat:1.6.1")
-    implementation("com.google.android.material:material:1.9.0")
+    implementation("com.google.android.material:material:1.11.0")
     implementation("androidx.constraintlayout:constraintlayout:2.1.4")
-    implementation("androidx.navigation:navigation-fragment-ktx:2.5.3")
-    implementation("androidx.navigation:navigation-ui-ktx:2.5.3")
+    implementation("androidx.navigation:navigation-fragment-ktx:2.7.6")
+    implementation("androidx.navigation:navigation-ui-ktx:2.7.6")
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
 }
 
 interface DD {
-    val rectRadius
-            : Dimension
+    val rectRadius: Dimension
 }
 
 class Test : DD {
@@ -86,25 +94,6 @@ sml {
         register("test2") {
             Line {
                 line(RgbColor("#00ff00"), Dp(10f))
-            }
-        }
-    }
-}
-val smlTargetPath = listOf("sml_res_colors", "sml_res_dimens", "sml_res_drawables")
-val debugPath = smlTargetPath.map {
-    "build/generated/$it/"
-}
-val type = listOf("debug", "release")
-kotlin {
-    sourceSets {
-        sourceSets.forEach {
-            println(it.name)
-        }
-        type.forEach {
-            getByName(it) {
-                kotlin.srcDirs(debugPath.map { p ->
-                    "$p$it"
-                }.toTypedArray())
             }
         }
     }

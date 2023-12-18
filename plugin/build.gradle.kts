@@ -25,7 +25,7 @@ publishing {
         maven {
             // $rootDir 表示你项目的根目录
             val file = File(rootDir, "../../repo")
-            println(file)
+            println(file.canonicalPath)
             setUrl(file.absolutePath)
         }
     }
