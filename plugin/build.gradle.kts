@@ -1,5 +1,3 @@
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
-
 plugins {
     id("java-gradle-plugin")
     id("maven-publish")
@@ -20,19 +18,15 @@ gradlePlugin {
     }
 }
 
-publishing {
-    repositories {
-        maven {
-            // $rootDir 表示你项目的根目录
-            val file = File(rootDir, "../../repo")
-            println(file.canonicalPath)
-            setUrl(file.absolutePath)
-        }
-    }
+dependencies {
+    testImplementation(kotlin("test"))
+    implementation("org.jetbrains.kotlin:kotlin-gradle-plugin:1.9.20")
+    implementation("com.android.tools.build:gradle:8.2.1")
 }
 
-dependencies {
-    testImplementation("junit:junit:4.13.2")
-    implementation("org.jetbrains.kotlin:kotlin-gradle-plugin:1.8.10")
-    implementation("com.android.tools.build:gradle:8.0.1")
+tasks.test {
+    useJUnitPlatform()
+    testLogging {
+        events("passed", "skipped", "failed")
+    }
 }

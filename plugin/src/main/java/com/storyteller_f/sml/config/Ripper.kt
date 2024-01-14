@@ -14,7 +14,7 @@ class ClipDrawable(drawable: Drawables, gravity: String, orientation: String) : 
         )
     }
 
-    override fun process() = ""
+    override fun startTag() = ""
 
     override fun endTag() = "</clip>"
 }
@@ -58,7 +58,7 @@ class RippleDrawable(color: Color, radius: Dimension) : Drawable(), IItem by Ite
         indirectForItem(elements)
     }
 
-    override fun process() = ""
+    override fun startTag() = ""
 
     override fun endTag() = "</ripper>"
 }

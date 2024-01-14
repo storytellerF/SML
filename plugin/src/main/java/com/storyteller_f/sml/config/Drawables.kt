@@ -5,16 +5,31 @@ package com.storyteller_f.sml.config
 
 interface Dimension
 
-class Dp(private val value: Float) : Dimension {
-    override fun toString() = "${value}dp"
+private fun Float.trim(): String {
+    val content = toString()
+    val dotIndex = content.lastIndexOf(".")
+    if (dotIndex >= 1) {
+        if (content.substring(dotIndex + 1).all {
+                it == '0'
+            }) {
+            return content.substring(0, dotIndex)
+        }
+    }
+    return content
 }
+
+class Dp(private val value: Float) : Dimension {
+    override fun toString() = "${value.trim()}dp"
+
+}
+
 
 class Px(private val value: Int) : Dimension {
     override fun toString() = "${value}px"
 }
 
 class Sp(private val value: Float) : Dimension {
-    override fun toString() = "${value}sp"
+    override fun toString() = "${value.trim()}sp"
 }
 
 class In(private val value: Int) : Dimension {
@@ -54,7 +69,12 @@ class ColorReference(override val referenceName: String) : Reference(referenceNa
     override fun type() = "color"
 }
 
-class OptionalInset(val left: Dimension?, val top: Dimension?, val right: Dimension?, val bottom: Dimension?)
+class OptionalInset(
+    val left: Dimension?,
+    val top: Dimension?,
+    val right: Dimension?,
+    val bottom: Dimension?,
+)
 
 class Tint(val tint: String? = null, val tintMode: String? = null)
 
@@ -62,12 +82,19 @@ class Tint(val tint: String? = null, val tintMode: String? = null)
 abstract class Drawable {
     val elements: StringBuilder = StringBuilder()
 
-    fun output() =
-        """<?xml version="1.0" encoding="utf-8"?>
-            
-        """.trimIndent() + process() + elements.toString() + endTag()
+    fun output() = buildString {
+        appendLine("""<?xml version="1.0" encoding="utf-8"?>""")
+        appendLine(startTag())
+        elements.let {
+            if (it.isNotEmpty()) {
+                append(it)
+            }
+        }
+        append(endTag())
+    }
 
-    abstract fun process(): String
+
+    abstract fun startTag(): String
 
     abstract fun endTag(): String
 }

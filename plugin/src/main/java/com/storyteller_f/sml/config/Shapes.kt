@@ -4,10 +4,11 @@ package com.storyteller_f.sml.config
 
 import com.storyteller_f.sml.tasks.DrawableDomain
 
-class RectangleShapeDrawable : ShapeDrawable("rectangle"), IStroke by Stroke(), IAppearance by Appearance(),
+class RectangleShapeDrawable : ShapeDrawable("rectangle"), IStroke by Stroke(),
+    IAppearance by Appearance(),
     IRound by Round() {
     init {
-        indirectForAppearance(elements)
+        indirectToDrawable(elements)
         indirectForStroke(elements)
         indirectForRound(elements)
     }
@@ -15,7 +16,7 @@ class RectangleShapeDrawable : ShapeDrawable("rectangle"), IStroke by Stroke(), 
 
 class OvalShapeDrawable : ShapeDrawable("oval"), IAppearance by Appearance() {
     init {
-        indirectForAppearance(elements)
+        indirectToDrawable(elements)
     }
 }
 
@@ -29,11 +30,12 @@ class RingShapeDrawable(
         indirectForStroke(elements)
     }
 
-    override fun extraParam(): String {
-        return """
-        android:innerRadius${isRatioExtra(isRatio)}="$innerRadius"
-        android:thickness${isRatioExtra(isRatio)}="$thickness"""".trimIndent()
-    }
+    override val extraParam: String
+        get() {
+            return """
+                    |    android:innerRadius${isRatioExtra(isRatio)}="$innerRadius"
+                    |    android:thickness${isRatioExtra(isRatio)}="$thickness"""".trimMargin()
+        }
 
     private fun isRatioExtra(isRatio: Boolean): String {
         return "Ratio".takeIf { isRatio } ?: ""
@@ -49,20 +51,59 @@ interface IStroke {
 
 interface IRound {
     fun corners(radius: Dimension)
-    fun corners(leftTop: Dimension, leftBottom: Dimension, rightTop: Dimension, rightBottom: Dimension)
+    fun corners(
+        leftTop: Dimension,
+        leftBottom: Dimension,
+        rightTop: Dimension,
+        rightBottom: Dimension
+    )
+
     fun indirectForRound(stringBuilder: StringBuilder)
 }
 
 interface IAppearance {
     fun solid(color: Color)
-    fun linearGradient(startColor: Color, endColor: Color, angle: Float = 0F, useLevel: String = "false")
-    fun linearGradient(startColor: Color, endColor: Color, centerColor: Color, centerX: Float = 0.5f, centerY: Float = 0.5f, angle: Float = 0F, useLevel: String = "false")
-    fun radialGradient(startColor: Color, endColor: Color, centerColor: Color, gradientRadius: String, useLevel: String = "false")
-    fun sweepGradient(startColor: Color, endColor: Color, centerColor: Color, useLevel: String = "false")
+    fun linearGradient(
+        startColor: Color,
+        endColor: Color,
+        angle: Float = 0F,
+        useLevel: String = "false"
+    )
+
+    fun linearGradient(
+        startColor: Color,
+        endColor: Color,
+        centerColor: Color,
+        centerX: Float = 0.5f,
+        centerY: Float = 0.5f,
+        angle: Float = 0F,
+        useLevel: String = "false"
+    )
+
+    fun radialGradient(
+        startColor: Color,
+        endColor: Color,
+        centerColor: Color,
+        gradientRadius: String,
+        useLevel: String = "false"
+    )
+
+    fun sweepGradient(
+        startColor: Color,
+        endColor: Color,
+        centerColor: Color,
+        useLevel: String = "false"
+    )
+
     fun padding(left: Dimension, top: Dimension, right: Dimension, bottom: Dimension)
     fun size(width: Dimension, height: Dimension)
 
-    fun indirectForAppearance(stringBuilder: StringBuilder)
+    /**
+     * 将appearance 的内容转发到Drawable 中的elements上
+     */
+    fun indirectToDrawable(stringBuilder: StringBuilder)
+    fun indirectToDrawable(drawable: Drawable)
+
 }
 
 class Appearance : IAppearance {
@@ -71,7 +112,12 @@ class Appearance : IAppearance {
         content?.appendLine("""<solid android:color="$color"/>""".prependIndent())
     }
 
-    override fun linearGradient(startColor: Color, endColor: Color, angle: Float, useLevel: String) {
+    override fun linearGradient(
+        startColor: Color,
+        endColor: Color,
+        angle: Float,
+        useLevel: String
+    ) {
         content?.appendLine(
             """
             <gradient android:type="linear" 
@@ -83,7 +129,15 @@ class Appearance : IAppearance {
         )
     }
 
-    override fun linearGradient(startColor: Color, endColor: Color, centerColor: Color, centerX: Float, centerY: Float, angle: Float, useLevel: String) {
+    override fun linearGradient(
+        startColor: Color,
+        endColor: Color,
+        centerColor: Color,
+        centerX: Float,
+        centerY: Float,
+        angle: Float,
+        useLevel: String
+    ) {
         content?.appendLine(
             """
             <gradient android:type="linear" 
@@ -98,7 +152,13 @@ class Appearance : IAppearance {
         )
     }
 
-    override fun radialGradient(startColor: Color, endColor: Color, centerColor: Color, gradientRadius: String, useLevel: String) {
+    override fun radialGradient(
+        startColor: Color,
+        endColor: Color,
+        centerColor: Color,
+        gradientRadius: String,
+        useLevel: String
+    ) {
         content?.appendLine(
             """
             <gradient android:type="radial" 
@@ -111,7 +171,12 @@ class Appearance : IAppearance {
         )
     }
 
-    override fun sweepGradient(startColor: Color, endColor: Color, centerColor: Color, useLevel: String) {
+    override fun sweepGradient(
+        startColor: Color,
+        endColor: Color,
+        centerColor: Color,
+        useLevel: String
+    ) {
         content?.appendLine(
             """
             <gradient android:type="sweep" 
@@ -134,8 +199,12 @@ class Appearance : IAppearance {
         content?.appendLine("""<size android:width="$width" android:height="$height"/>""".prependIndent())
     }
 
-    override fun indirectForAppearance(stringBuilder: StringBuilder) {
+    override fun indirectToDrawable(stringBuilder: StringBuilder) {
         content = stringBuilder
+    }
+
+    override fun indirectToDrawable(drawable: Drawable) {
+        indirectToDrawable(drawable.elements)
     }
 
 }
@@ -144,7 +213,9 @@ class Stroke : IStroke {
     private var content: StringBuilder? = null
     override fun stroke(color: Color, width: Dimension) {
         content?.appendLine(
-            """<stroke android:color="$color" android:width="$width"/>""".prependIndent()
+            """<stroke
+                |    android:width="$width"
+                |    android:color="$color"/>""".trimMargin().prependIndent()
         )
     }
 
@@ -160,7 +231,12 @@ class Round : IRound {
         content?.appendLine("""<corners android:radius="$radius"/>""".prependIndent())
     }
 
-    override fun corners(leftTop: Dimension, leftBottom: Dimension, rightTop: Dimension, rightBottom: Dimension) {
+    override fun corners(
+        leftTop: Dimension,
+        leftBottom: Dimension,
+        rightTop: Dimension,
+        rightBottom: Dimension
+    ) {
         content?.appendLine(
             """<corners android:bottomLeftRadius="$leftBottom" android:topRightRadius="$rightTop" 
                 android:bottomRightRadius="$rightBottom" android:topLeftRadius="$leftTop"/>""".prependIndent()
@@ -182,35 +258,51 @@ class LineShapeDrawable : ShapeDrawable("line"), IStroke by Stroke() {
 }
 
 abstract class ShapeDrawable(private val shape: String) : Drawable() {
-    val dither: Boolean = false
-    val visible: Boolean = true
-    val tint: Tint? = null
-    val optionalInset: OptionalInset? = null
+    private val dither: Boolean = false
+    private val visible: Boolean = true
+    private val tint: Tint? = null
+    private val optionalInset: OptionalInset? = null
 
-    override fun process(): String {
-        val tintBuilder = StringBuilder()
-        if (tint?.tint != null) {
-            tintBuilder.appendLine("tint=\"${tint.tint}\"")
-            if (tint.tintMode != null)
-                tintBuilder.appendLine("tintMode=\"${tint.tintMode}\"")
+    override fun startTag(): String {
+        val tint = buildString {
+            if (tint?.tint != null) {
+                appendLine("tint=\"${tint.tint}\"")
+                if (tint.tintMode != null)
+                    appendLine("tintMode=\"${tint.tintMode}\"")
+            }
         }
-        val inset = StringBuilder()
-        if (optionalInset?.left != null) inset.appendLine("optionalInsetLeft=\"${optionalInset.left}\"")
-        if (optionalInset?.top != null) inset.appendLine("optionalInsetTop=\"${optionalInset.top}\"")
-        if (optionalInset?.right != null) inset.appendLine("optionalInsetRight=\"${optionalInset.right}\"")
-        if (optionalInset?.bottom != null) inset.appendLine("optionalInsetRight=\"${optionalInset.bottom}\"")
-        return """
-<shape android:shape="$shape"
-    dither="$dither"
-    visible="$visible"
-${extraParam().prependIndent()}
-${tintBuilder.toString().prependIndent()}
-${inset.toString().prependIndent()}
-    xmlns:android="http://schemas.android.com/apk/res/android">
-            """.trimIndent()
+
+        val inset = buildString {
+            if (optionalInset?.left != null) appendLine("optionalInsetLeft=\"${optionalInset.left}\"")
+            if (optionalInset?.top != null) appendLine("optionalInsetTop=\"${optionalInset.top}\"")
+            if (optionalInset?.right != null) appendLine("optionalInsetRight=\"${optionalInset.right}\"")
+            if (optionalInset?.bottom != null) appendLine("optionalInsetRight=\"${optionalInset.bottom}\"")
+        }
+        return buildString {
+            appendLine(
+                """
+                |<shape android:shape="$shape"
+                |    dither="$dither"
+                |    visible="$visible"
+            """.trimMargin()
+            )
+            extraParam.let {
+                if (it.isNotEmpty()) {
+                    appendLine(it)
+                }
+            }
+            if (tint.isNotEmpty()) {
+                appendLine(tint)
+            }
+            if (inset.isNotEmpty()) {
+                appendLine(inset)
+            }
+            appendLine("""xmlns:android="http://schemas.android.com/apk/res/android">""".prependIndent())
+        }
     }
 
-    open fun extraParam(): String = ""
+    open val extraParam: String
+        get() = ""
 
     override fun endTag(): String {
         return "</shape>"
@@ -227,12 +319,26 @@ fun DrawableDomain.Oval(block: OvalShapeDrawable.() -> Unit) {
     drawable.set(OvalShapeDrawable().apply(block).output())
 }
 
-fun DrawableDomain.Ring(innerRadius: String, thickness: String, block: RingShapeDrawable.() -> Unit) {
+fun DrawableDomain.Ring(
+    innerRadius: String,
+    thickness: String,
+    block: RingShapeDrawable.() -> Unit
+) {
     drawable.set(RingShapeDrawable(innerRadius, thickness, false).apply(block).output())
 }
 
-fun DrawableDomain.Ring(innerRadiusRatio: Float, thicknessRatio: Float, block: RingShapeDrawable.() -> Unit) {
-    drawable.set(RingShapeDrawable(innerRadiusRatio.toString(), thicknessRatio.toString(), true).apply(block).output())
+fun DrawableDomain.Ring(
+    innerRadiusRatio: Float,
+    thicknessRatio: Float,
+    block: RingShapeDrawable.() -> Unit
+) {
+    drawable.set(
+        RingShapeDrawable(
+            innerRadiusRatio.toString(),
+            thicknessRatio.toString(),
+            true
+        ).apply(block).output()
+    )
 }
 
 fun DrawableDomain.Line(block: LineShapeDrawable.() -> Unit) {
