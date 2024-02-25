@@ -10,9 +10,6 @@ import java.io.File
 fun Project.android(configure: Action<com.android.build.gradle.internal.dsl.BaseAppModuleExtension>): Unit =
     (this as ExtensionAware).extensions.configure("android", configure)
 
-fun Project.kotlin(configure: Action<KotlinAndroidProjectExtension>): Unit =
-    (this as ExtensionAware).extensions.configure("kotlin", configure)
-
 fun File.writeXlmWithTags(body: String) {
     ("<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
             "<resources>" +

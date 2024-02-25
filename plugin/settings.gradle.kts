@@ -6,6 +6,3 @@ dependencyResolutionManagement {
         mavenCentral()
     }
 }
-
-rootProject.name = "plugin"
-include (":plugin")

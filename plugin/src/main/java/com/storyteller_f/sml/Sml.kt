@@ -6,10 +6,13 @@ import com.storyteller_f.sml.tasks.ColorTask
 import com.storyteller_f.sml.tasks.DimensionTask
 import com.storyteller_f.sml.tasks.DrawableDomain
 import com.storyteller_f.sml.tasks.ShapeTask
+import org.gradle.api.DefaultTask
 import org.gradle.api.NamedDomainObjectContainer
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.provider.MapProperty
+import org.gradle.api.tasks.TaskProvider
+import org.gradle.kotlin.dsl.support.uppercaseFirstChar
 import java.io.File
 import java.util.*
 
@@ -21,25 +24,12 @@ interface SmlExtension {
 
 class Sml : Plugin<Project> {
     override fun apply(project: Project) {
-        val extension = project.extensions.create("sml", SmlExtension::class.java)
-        val rootPath = "${project.buildDir}/generated"
-        setup(project, rootPath, extension, "main", "main")
-        project.afterEvaluate {
-            listOf("mapDebugSourceSetPaths", "generateDebugResources").forEach { name ->
-                listOf("colors", "dimens", "shapes").forEach {
-                    val t = tasks.getByName(
-                        "generate${
-                            it.replaceFirstChar { firstChar ->
-                                if (firstChar.isLowerCase()) firstChar.titlecase(
-                                    Locale.getDefault()
-                                ) else firstChar.toString()
-                            }
-                        }Main"
-                    )
-                    tasks.getByName(name).dependsOn(t)
-                }
-            }
-        }
+        val taskProviderList = setup(project, "main", "main")
+        setupDependencies(project, taskProviderList)
+        setupSourceSets(project)
+    }
+
+    private fun setupSourceSets(project: Project) {
         project.android {
             val smlTargetPath = listOf("sml_res_colors", "sml_res_dimens", "sml_res_drawables")
             val debugPath = smlTargetPath.map {
@@ -58,31 +48,49 @@ class Sml : Plugin<Project> {
         }
     }
 
+    private fun setupDependencies(project: Project, taskProviderList: List<TaskProvider<out DefaultTask>>) {
+        project.afterEvaluate {
+            listOf("debug", "release").forEach {
+                val typeName = it.uppercaseFirstChar()
+                listOf(
+                    "map${typeName}SourceSetPaths",
+                    "generate${typeName}Resources",
+                    "merge${typeName}Resources",
+                ).forEach { name ->
+                    val task = tasks.getByName(name)
+                    taskProviderList.forEach { taskProvider ->
+                        task.dependsOn(taskProvider)
+                    }
+                }
+            }
+        }
+    }
+
     @Suppress("SameParameterValue")
     private fun setup(
         project: Project,
-        rootPath: String,
-        extension: SmlExtension,
         subPath: String,
         variantName: String
-    ) {
-        project.tasks.register(taskName("Colors", variantName), ColorTask::class.java) {
-            val colorsOutputDirectory =
-                File(File(rootPath, "sml_res_colors"), subPath).apply { mkdirs() }
-            config(colorsOutputDirectory, extension)
-        }
-
-        project.tasks.register(taskName("Dimens", variantName), DimensionTask::class.java) {
-            val dimensOutputDirectory =
-                File(File(rootPath, "sml_res_dimens"), subPath).apply { mkdirs() }
-            config(dimensOutputDirectory, extension)
-        }
-
-        project.tasks.register(taskName("Shapes", variantName), ShapeTask::class.java) {
-            val drawablesOutputDirectory =
-                File(File(rootPath, "sml_res_drawables"), subPath).apply { mkdirs() }
-            config(drawablesOutputDirectory, extension)
-        }
+    ): List<TaskProvider<out DefaultTask>> {
+        val extension = project.extensions.create("sml", SmlExtension::class.java)
+        val rootPath = "${project.buildDir}/generated"
+        return listOf(
+            project.tasks.register(taskName("Colors", variantName), ColorTask::class.java) {
+                val colorsOutputDirectory =
+                    File(File(rootPath, "sml_res_colors"), subPath).apply { mkdirs() }
+                config(colorsOutputDirectory, extension)
+            },
+            project.tasks.register(taskName("Dimens", variantName), DimensionTask::class.java) {
+                val dimensOutputDirectory =
+                    File(File(rootPath, "sml_res_dimens"), subPath).apply { mkdirs() }
+                config(dimensOutputDirectory, extension)
+            },
+            project.tasks.register(taskName("Shapes", variantName), ShapeTask::class.java) {
+                val drawablesOutputDirectory =
+                    File(File(rootPath, "sml_res_drawables"), subPath).apply { mkdirs() }
+                config(drawablesOutputDirectory, extension)
+            }
+        )
     }
 
     private fun ShapeTask.config(
