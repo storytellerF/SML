@@ -1,3 +1,6 @@
+import com.storyteller_f.sml.colorMap
+import com.storyteller_f.sml.colors
+import com.storyteller_f.sml.config.Color
 import com.storyteller_f.sml.config.Dimension
 import com.storyteller_f.sml.config.Dp
 import com.storyteller_f.sml.config.Line
@@ -5,6 +8,8 @@ import com.storyteller_f.sml.config.Oval
 import com.storyteller_f.sml.config.Rectangle
 import com.storyteller_f.sml.config.RgbColor
 import com.storyteller_f.sml.config.Ring
+import com.storyteller_f.sml.config.rgb
+import com.storyteller_f.sml.dimenMap
 import com.storyteller_f.sml.dimens
 import com.storyteller_f.sml.reference
 
@@ -64,21 +69,37 @@ dependencies {
 
 interface DD {
     val rectRadius: Dimension
+
+    val compatRectRadius: Dimension
+
+    val bigRectRadius: Dimension
 }
 
-class Test : DD {
-    override val rectRadius: Dimension
-        get() = Dp(12f)
+class DefaultDevice : DD {
+    override val rectRadius: Dimension = Dp(2f)
+    override val compatRectRadius: Dimension = Dp(4f)
+    override val bigRectRadius: Dimension = Dp(8f)
+}
+
+class Theme1 {
+    val color1: Color = "#496989".rgb()
+    val color2: Color = "#58A399".rgb()
+    val color3: Color = "#A8CD9F".rgb()
+    val color4: Color = "#E2F4C5".rgb()
 }
 
 sml {
-    color.set(mutableMapOf("test" to "#ff0000"))
-    dimen.set(Test::class.dimens())
+    color.set(Theme1::class.colors())
+    dimen.set(DefaultDevice::class.dimens())
     drawables {
-        register("hello") {
-            Rectangle {
-                solid(RgbColor("#00ff00"))
-                corners(Test::rectRadius.reference())
+        Theme1::class.colorMap().forEach { cp ->
+            DefaultDevice::class.dimenMap().forEach { dp ->
+                register("drawable_${cp.name}_${dp.name}") {
+                    Rectangle {
+                        solid(cp.reference())
+                        corners(dp.reference())
+                    }
+                }
             }
         }
         register("test") {

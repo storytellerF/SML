@@ -65,6 +65,10 @@ class RgbColor(private val color: String) : Color {
     override fun toString() = color
 }
 
+fun String.rgb(): RgbColor {
+    return RgbColor(this)
+}
+
 class ColorReference(override val referenceName: String) : Reference(referenceName), Color {
     override fun type() = "color"
 }

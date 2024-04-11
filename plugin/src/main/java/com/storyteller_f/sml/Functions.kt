@@ -1,6 +1,11 @@
 package com.storyteller_f.sml
 
-import com.storyteller_f.sml.config.*
+import com.storyteller_f.sml.config.Color
+import com.storyteller_f.sml.config.ColorReference
+import com.storyteller_f.sml.config.Dimension
+import com.storyteller_f.sml.config.DimensionReference
+import com.storyteller_f.sml.config.DrawableReference
+import com.storyteller_f.sml.config.Drawables
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
 import kotlin.reflect.full.declaredMemberProperties
@@ -72,30 +77,42 @@ import kotlin.reflect.full.primaryConstructor
 //    return getFileLocations(variantDirname)
 //}
 
-fun <T : Any> KClass<T>.dimens(): MutableMap<String, String> {
+fun <T : Any> KClass<T>.dimens(): Map<String, String> {
     val call = primaryConstructor?.call() ?: return mutableMapOf()
-    val m = mutableMapOf<String, String>()
-    declaredMemberProperties.forEach {
-        m[it.name] = it.get(call).toString()
+    return buildMap {
+        dimenMap().forEach {
+            put(it.name, it(call).toString())
+        }
     }
-    return m
 }
-fun <T : Any> KClass<T>.colors(): MutableMap<String, String> {
-    val call = primaryConstructor?.call() ?: return mutableMapOf()
-    val m = mutableMapOf<String, String>()
-    declaredMemberProperties.forEach {
-        m[it.name] = it.get(call).toString()
+
+fun <T : Any> KClass<T>.dimenMap(): List<KProperty1<T, Dimension>> {
+    return declaredMemberProperties.filter {
+        it.returnType.toString() == Dimension::class.qualifiedName
+    }.map {
+        @Suppress("UNCHECKED_CAST")
+        it as KProperty1<T, Dimension>
     }
-    return m
 }
-//interface DD {
-//    val rectRadius: Dimension
-//}
-//
-//class Test : DD {
-//    override val rectRadius: Dimension
-//        get() = Dp(12f)
-//}
+
+fun <T : Any> KClass<T>.colors(): Map<String, String> {
+    val call = primaryConstructor?.call() ?: return mapOf()
+    return buildMap {
+        colorMap().forEach {
+            put(it.name, it.get(call).toString())
+        }
+    }
+}
+
+fun <T : Any> KClass<T>.colorMap(): List<KProperty1<T, Color>> {
+    return declaredMemberProperties.filter {
+        it.returnType.toString() == Color::class.qualifiedName
+    }.map {
+        @Suppress("UNCHECKED_CAST")
+        it as KProperty1<T, Color>
+    }
+}
+
 fun KProperty1<out Any, Dimension>.reference() = DimensionReference(name)
 fun KProperty1<out Any, Drawables>.reference() = DrawableReference(name)
 fun KProperty1<out Any, Color>.reference() = ColorReference(name)

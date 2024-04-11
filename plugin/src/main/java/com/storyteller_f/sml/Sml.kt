@@ -2,6 +2,7 @@
 
 package com.storyteller_f.sml
 
+import com.android.build.gradle.internal.tasks.factory.dependsOn
 import com.storyteller_f.sml.tasks.ColorTask
 import com.storyteller_f.sml.tasks.DimensionTask
 import com.storyteller_f.sml.tasks.DrawableDomain
@@ -74,6 +75,9 @@ class Sml : Plugin<Project> {
     ): List<TaskProvider<out DefaultTask>> {
         val extension = project.extensions.create("sml", SmlExtension::class.java)
         val rootPath = "${project.buildDir}/generated"
+        val genericTask = project.tasks.register("generateSML") {
+            group = "sml"
+        }
         return listOf(
             project.tasks.register(taskName("Colors", variantName), ColorTask::class.java) {
                 val colorsOutputDirectory =
@@ -90,7 +94,9 @@ class Sml : Plugin<Project> {
                     File(File(rootPath, "sml_res_drawables"), subPath).apply { mkdirs() }
                 config(drawablesOutputDirectory, extension)
             }
-        )
+        ).onEach {
+            genericTask.dependsOn(it)
+        }
     }
 
     private fun ShapeTask.config(

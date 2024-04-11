@@ -1,5 +1,11 @@
 # SML
 
+## Build
+
+```shell
+sh gradlew -Pgroup=com.github.storytellerF clean -xtest assemble :plugin:publishToMavenLocal
+```
+
 ## 使用
 
 导入插件
