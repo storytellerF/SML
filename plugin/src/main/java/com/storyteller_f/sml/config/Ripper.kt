@@ -8,7 +8,10 @@ class ClipDrawable(drawable: Drawables, gravity: String, orientation: String) : 
     init {
         elements.appendLine(
             """
-            <clip android:drawable="$drawable" android:gravity="$gravity" android:clipOrientation="$orientation"
+            <clip 
+                android:drawable="$drawable" 
+                android:gravity="$gravity" 
+                android:clipOrientation="$orientation"
                 xmlns:android="http://schemas.android.com/apk/res/android" />
         """.trimIndent()
         )
@@ -49,7 +52,8 @@ class RippleDrawable(color: Color, radius: Dimension) : Drawable(), IItem by Ite
     init {
         elements.appendLine(
             """
-            <ripple android:color="#ff0000"
+            <ripple
+                android:color="#ff0000"
                 android:radius="$radius"
                 android:effectColor="$color"
                 xmlns:android="http://schemas.android.com/apk/res/android">
