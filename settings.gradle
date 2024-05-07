@@ -13,5 +13,5 @@ dependencyResolutionManagement {
         mavenCentral()
     }
 }
-rootProject.name = "sml"
+rootProject.name = "SML"
 include ':app'
