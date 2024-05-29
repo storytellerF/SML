@@ -1,0 +1,1 @@
+sh gradlew clean -xtest :core:publishToMavenLocal

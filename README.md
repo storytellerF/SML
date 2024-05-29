@@ -8,66 +8,14 @@ sh gradlew -Pgroup=com.github.storytellerF clean -xtest assemble :plugin:publish
 
 ## 使用
 
-导入插件
+1. 完整复制plugin 文件夹到项目根目录
 
-```kts
-id("com.storyteller_f.sml")
-```
+2. 将导入的plugin 作为composite build 导入项目
 
-加入Source Set
+3. 在需要的地方添加插件
 
-```kts
-val smls = listOf("sml_res_colors", "sml_res_dimens", "sml_res_drawables")
-val p = smls.map {
-    "build/generated/$it/debug"
-}
-kotlin {
-    sourceSets {
-        getByName("main") {
-            kotlin.srcDirs(p.toTypedArray())
-        }
-    }
-}
-```
+    ```kts
+    id("com.storyteller_f.sml")
+    ```
 
-使用
-
-```kts
-interface DD {
-    val rectRadius
-            : Dimension
-}
-
-class Test : DD {
-    override val rectRadius: Dimension
-        get() = Dp(12f)
-}
-
-sml {
-    color.set(mutableMapOf("test" to "#ff0000"))
-    dimen.set(Test::class.dimens())
-    drawables {
-        register("hello") {
-            Rectangle {
-                solid(RgbColor("#00ff00"))
-                corners(Test::rectRadius.reference())
-            }
-        }
-        register("test") {
-            Oval {
-                solid(RgbColor("#00ff00"))
-            }
-        }
-        register("test1") {
-            Ring("10dp", "1dp") {
-                ring(RgbColor("#00ff00"), Dp(10f))
-            }
-        }
-        register("test2") {
-            Line {
-                line(RgbColor("#00ff00"), Dp(10f))
-            }
-        }
-    }
-}
-```
+4. 执行`gradlew generateSML`。
